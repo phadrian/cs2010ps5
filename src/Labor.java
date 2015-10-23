@@ -3,8 +3,8 @@ import java.util.*;
 import java.io.*;
 
 // write your matric number here:
-// write your name here:
-// write list of collaborators here:
+// write your name here: Adrian Pheh
+// write list of collaborators here: A0124123Y
 // year 2015 hash code: JESg5svjYpIsmHmIjabX (do NOT delete this line)
 
 class Labor {
@@ -40,10 +40,13 @@ class Labor {
 		
 		for (int i = 0; i < V; i++) {
 			initArrays();
-			DFS(AdjList, i, i);
+			DFS(AdjList, i, i, 0);
+			//System.out.println();
+			//displayParent();
 		}
 		
-		displayCache();
+		//System.out.println();
+		//displayCache();
 
 		//------------------------------------------------------------------------- 
 	}
@@ -81,16 +84,28 @@ class Labor {
         sumOfWeights = 0;
     }
 
-    public void DFS(Vector<Vector<IntegerPair>> adjList, int source, int vertex) {
+    public void DFS(Vector<Vector<IntegerPair>> adjList, int source, int vertex, int sum) {
     	visited[vertex] = 1;
+    	//System.out.println("At vertex " + vertex);
     	for (int i = 0; i < adjList.get(vertex).size(); i++) {
+    		
     		int nextVertex = adjList.get(vertex).get(i).second();
+    		//System.out.println("To vertex " + nextVertex);
+    		
     		if (visited[nextVertex] == 0) {
-    			sumOfWeights += adjList.get(vertex).get(i).first();
+    			// Use sum as total weight up to vertex
+    			sumOfWeights = sum + adjList.get(vertex).get(i).first();
+    			//System.out.println("Sum of weights: " + sumOfWeights);
+    			
     			cache[source][nextVertex] = sumOfWeights; 
     			parent[nextVertex] = vertex;
-    			DFS(adjList, source, nextVertex);
-    			sumOfWeights = 0;
+    			DFS(adjList, source, nextVertex, sumOfWeights);
+    			
+    			//System.out.println("Returning to branch " + vertex);
+    			// After returning from a depth traversal, restore sumOfWeights back to the
+    			// original weight before entering the depth traversal (i.e sum of the top most
+    			// element of the traversal stack)
+    			sumOfWeights = sum;
     		}
     	}
     }
@@ -105,6 +120,12 @@ class Labor {
     	}
     }
 
+    public void displayParent() {
+    	System.out.println();
+    	for (int i = 0; i < parent.length; i++) {
+    		System.out.print(parent[i] + " ");
+    	}
+    }
 	// --------------------------------------------
 
 	void run() throws Exception {
