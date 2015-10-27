@@ -2,17 +2,18 @@
 import java.util.*;
 import java.io.*;
 
-// write your matric number here: A0124123Y
+// write your matric number here:
 // write your name here: Adrian Pheh
-// write list of collaborators here: Sean Tay
+// write list of collaborators here: A0124123Y
 // year 2015 hash code: JESg5svjYpIsmHmIjabX (do NOT delete this line)
 
 class Labor {
 	private int V; // number of vertices in the graph (number of junctions in Singapore map)
 	private int Q; // number of queries
-	private int[][] dist;
+	private int[] dist;
 	private final int INF = 1000000000;
-	private ArrayList<ArrayList<IntegerPair>> AdjList; // the weighted graph (the Singapore map), the length of each edge (road) is stored here too, as the weight of edge
+	private int[][] cache;
+	private Vector<Vector<IntegerPair>> AdjList; // the weighted graph (the Singapore map), the length of each edge (road) is stored here too, as the weight of edge
 
 	// if needed, declare a private data structure here that
 	// is accessible to all methods in this class
@@ -34,7 +35,14 @@ class Labor {
 		//
 		// write your answer here
 		//------------------------------------------------------------------------- 
-		
+		for (int i = 0; i < 10; i++) {
+			if (i < V) {
+				dijkstra(AdjList, i);
+				for (int j = 0; j < V; j++) {
+					cache[i][j] = dist[j];
+				}
+			}
+		}
 		//------------------------------------------------------------------------- 
 	}
 
@@ -46,18 +54,9 @@ class Labor {
 		// with one catch: this path cannot use more than k vertices
 		//
 		// PS: this query means different thing for the Subtask D (R-option)
-		bellmanFord(AdjList, s, k);
-		//display();
-		
-		int currentMin = INF;
-		for (int i = 1; i < k; i++) {
-			currentMin = Math.min(currentMin, dist[t][i]);
-		}
 
-		if (currentMin == INF) {
-			ans = -1;
-		} else {
-			ans = currentMin;
+		if (cache[s][t] != INF) {
+			ans = cache[s][t];
 		}
 		
 		return ans;
@@ -66,37 +65,33 @@ class Labor {
 	// You can add extra function if needed
 	// --------------------------------------------
 
-    public void initSSSP(int source, int k) {
-    	
-    	dist = new int[V][k];
-    	
+    public void initSSSP(int source) {
     	for (int i = 0; i < V; i++) {
-    		for (int j = 0; j < k; j++) {
-    			dist[i][j] = INF;
-    		}
+    		dist[i] = INF;
     	}
-    	
-    	for (int j = 0; j < k; j++) {
-			dist[source][j] = 0;
-		}
+    	dist[source] = 0;
     }
     
-    public void relax(int u, int v, int weight, int k) {
-    	if (dist[v][k+1] > dist[u][k] + weight) {
-    		dist[v][k+1] = dist[u][k] + weight;
-    	}
-    }
-    
-    public void bellmanFord(ArrayList<ArrayList<IntegerPair>> adjList, int source, int k) {
+    public void dijkstra(Vector<Vector<IntegerPair>> adjList, int source) {
     	
-    	initSSSP(source, k);
+    	// Initialize the PQ used for dijkstra
+    	PriorityQueue<IntegerPair> pq = new PriorityQueue<IntegerPair>();
     	
-    	for (int i = 0; i < k - 1; i++) {
-    		for (int u = 0; u < V; u++) {
-    			for (int j = 0; j < adjList.get(u).size(); j++) {
-    				int v = adjList.get(u).get(j).second();
-    				int weight = adjList.get(u).get(j).first();
-    				relax(u, v, weight, i);
+    	initSSSP(source);
+    	
+    	pq.offer(new IntegerPair(0, source));
+    	while (!pq.isEmpty()) {
+    		IntegerPair temp = pq.poll();
+    		int d = temp.first();
+    		int u = temp.second();
+    		if (d == dist[u]) {
+    			for (int i = 0; i < adjList.get(u).size(); i++) {
+					int v = adjList.get(u).get(i).second();
+					int weight = adjList.get(u).get(i).first();
+    				if (dist[v] > dist[u] + weight) {
+    					dist[v] = dist[u] + weight;
+    					pq.offer(new IntegerPair(dist[v], v));
+    				}
     			}
     		}
     	}
@@ -104,9 +99,16 @@ class Labor {
     
     public void display() {
     	for (int i = 0; i < V; i++) {
-    		for (int j = 0; j < dist[i].length; j++) {
-    			System.out.print(dist[i][j] + " ");
-    		}
+    		System.out.println("Distance to vertex " + i + ": " + dist[i]);
+    	}
+    	System.out.println();
+    }
+    
+    public void displayCache() {
+    	for (int i = 0; i < 10; i++) {
+    		for (int j = 0; j < V; j++) {
+        		System.out.println(cache[i][j] + " ");
+        	}
     		System.out.println();
     	}
     	System.out.println();
@@ -122,11 +124,15 @@ class Labor {
 		int TC = sc.nextInt(); // there will be several test cases
 		while (TC-- > 0) {
 			V = sc.nextInt();
+
+			// Initialize arrays
+			dist = new int[V];
+			cache = new int[10][V];
 			
 			// clear the graph and read in a new graph as Adjacency List
-			AdjList = new ArrayList<ArrayList<IntegerPair>>();
+			AdjList = new Vector<Vector<IntegerPair>>();
 			for (int i = 0; i < V; i++) {
-				AdjList.add(new ArrayList<IntegerPair>());
+				AdjList.add(new Vector<IntegerPair>());
 
 				int k = sc.nextInt();
 				while (k-- > 0) {

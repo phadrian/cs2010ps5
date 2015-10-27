@@ -2,17 +2,18 @@
 import java.util.*;
 import java.io.*;
 
-// write your matric number here: A0124123Y
+// write your matric number here:
 // write your name here: Adrian Pheh
-// write list of collaborators here: Sean Tay
+// write list of collaborators here: A0124123Y
 // year 2015 hash code: JESg5svjYpIsmHmIjabX (do NOT delete this line)
 
 class Labor {
 	private int V; // number of vertices in the graph (number of junctions in Singapore map)
 	private int Q; // number of queries
-	private int[][] dist;
-	private final int INF = 1000000000;
-	private ArrayList<ArrayList<IntegerPair>> AdjList; // the weighted graph (the Singapore map), the length of each edge (road) is stored here too, as the weight of edge
+	private int sumOfWeights;
+	private int[] parent, visited;
+	private int[][] cache;
+	private Vector<Vector<IntegerPair>> AdjList; // the weighted graph (the Singapore map), the length of each edge (road) is stored here too, as the weight of edge
 
 	// if needed, declare a private data structure here that
 	// is accessible to all methods in this class
@@ -34,7 +35,19 @@ class Labor {
 		//
 		// write your answer here
 		//------------------------------------------------------------------------- 
+		// Cache the results beforehand
+		cache = new int[V][V];
 		
+		for (int i = 0; i < V; i++) {
+			initArrays();
+			DFS(AdjList, i, i, 0);
+			//System.out.println();
+			//displayParent();
+		}
+		
+		//System.out.println();
+		//displayCache();
+
 		//------------------------------------------------------------------------- 
 	}
 
@@ -46,72 +59,73 @@ class Labor {
 		// with one catch: this path cannot use more than k vertices
 		//
 		// PS: this query means different thing for the Subtask D (R-option)
-		bellmanFord(AdjList, s, k);
-		//display();
-		
-		int currentMin = INF;
-		for (int i = 1; i < k; i++) {
-			currentMin = Math.min(currentMin, dist[t][i]);
-		}
+		//
+		// write your answer here
+		ans = cache[s][t];
 
-		if (currentMin == INF) {
-			ans = -1;
-		} else {
-			ans = currentMin;
-		}
-		
+		//------------------------------------------------------------------------- 
+
 		return ans;
 	}
 
 	// You can add extra function if needed
 	// --------------------------------------------
 
-    public void initSSSP(int source, int k) {
+    // Reinitialize the visited and parent arrays after every run of DFS
+    public void initArrays() {
     	
-    	dist = new int[V][k];
+    	visited = new int[V];
+    	parent = new int[V];
     	
-    	for (int i = 0; i < V; i++) {
-    		for (int j = 0; j < k; j++) {
-    			dist[i][j] = INF;
+        for (int i = 0; i < V; i++) {
+            visited[i] = 0;
+            parent[i] = -1;
+        }
+        sumOfWeights = 0;
+    }
+
+    public void DFS(Vector<Vector<IntegerPair>> adjList, int source, int vertex, int sum) {
+    	visited[vertex] = 1;
+    	//System.out.println("At vertex " + vertex);
+    	for (int i = 0; i < adjList.get(vertex).size(); i++) {
+    		
+    		int nextVertex = adjList.get(vertex).get(i).second();
+    		//System.out.println("To vertex " + nextVertex);
+    		
+    		if (visited[nextVertex] == 0) {
+    			// Use sum as total weight up to vertex
+    			sumOfWeights = sum + adjList.get(vertex).get(i).first();
+    			//System.out.println("Sum of weights: " + sumOfWeights);
+    			
+    			cache[source][nextVertex] = sumOfWeights; 
+    			parent[nextVertex] = vertex;
+    			DFS(adjList, source, nextVertex, sumOfWeights);
+    			
+    			//System.out.println("Returning to branch " + vertex);
+    			// After returning from a depth traversal, restore sumOfWeights back to the
+    			// original weight before entering the depth traversal (i.e sum of the top most
+    			// element of the traversal stack)
+    			sumOfWeights = sum;
     		}
     	}
-    	
-    	for (int j = 0; j < k; j++) {
-			dist[source][j] = 0;
-		}
     }
     
-    public void relax(int u, int v, int weight, int k) {
-    	if (dist[v][k+1] > dist[u][k] + weight) {
-    		dist[v][k+1] = dist[u][k] + weight;
-    	}
-    }
-    
-    public void bellmanFord(ArrayList<ArrayList<IntegerPair>> adjList, int source, int k) {
-    	
-    	initSSSP(source, k);
-    	
-    	for (int i = 0; i < k - 1; i++) {
-    		for (int u = 0; u < V; u++) {
-    			for (int j = 0; j < adjList.get(u).size(); j++) {
-    				int v = adjList.get(u).get(j).second();
-    				int weight = adjList.get(u).get(j).first();
-    				relax(u, v, weight, i);
-    			}
-    		}
-    	}
-    }
-    
-    public void display() {
+    public void displayCache() {
+    	System.out.println();
     	for (int i = 0; i < V; i++) {
-    		for (int j = 0; j < dist[i].length; j++) {
-    			System.out.print(dist[i][j] + " ");
+    		for (int j = 0; j < V; j++) {
+    			System.out.print(cache[i][j] + " ");
     		}
     		System.out.println();
     	}
-    	System.out.println();
     }
-    
+
+    public void displayParent() {
+    	System.out.println();
+    	for (int i = 0; i < parent.length; i++) {
+    		System.out.print(parent[i] + " ");
+    	}
+    }
 	// --------------------------------------------
 
 	void run() throws Exception {
@@ -122,11 +136,11 @@ class Labor {
 		int TC = sc.nextInt(); // there will be several test cases
 		while (TC-- > 0) {
 			V = sc.nextInt();
-			
+
 			// clear the graph and read in a new graph as Adjacency List
-			AdjList = new ArrayList<ArrayList<IntegerPair>>();
+			AdjList = new Vector<Vector<IntegerPair>>();
 			for (int i = 0; i < V; i++) {
-				AdjList.add(new ArrayList<IntegerPair>());
+				AdjList.add(new Vector<IntegerPair>());
 
 				int k = sc.nextInt();
 				while (k-- > 0) {
@@ -198,7 +212,7 @@ class IntegerScanner { // coded by Ian Leow, using any other I/O method is not r
 
 
 
-class IntegerPair implements Comparable<IntegerPair> {
+class IntegerPair implements Comparable < IntegerPair > {
 	Integer _first, _second;
 
 	public IntegerPair(Integer f, Integer s) {
